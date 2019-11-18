@@ -48,6 +48,13 @@ export class GVL implements VendorList, Declarations {
 
   /**
    * @static
+   * @param {string} - the base url to load the vendor-list.json
+   * when you need the GVL in another lenguage.
+   */
+  public static languageUrl: string;
+
+  /**
+   * @static
    * @param {string} - the latest is assumed to be vendor-list.json because
    * that is what the iab uses, but it could be different... if you want
    */
@@ -317,18 +324,18 @@ export class GVL implements VendorList, Declarations {
 
           } else {
 
-            let url = GVL.baseUrl;
+            let url = GVL.languageUrl;
 
             if (!url) {
 
-              throw new GVLError('must specify GVL.baseUrl before changing the language');
+              throw new GVLError('must specify GVL.languageUrl before changing the language');
 
             }
 
             url = this.addTrailingSlashMaybe(url);
 
             // load version specified
-            url += GVL.languageFilename.replace('[LANG]', lang);
+            url += GVL.languageFilename.replace('[LANG]', lang.toLowerCase());
 
             // hooks onto readyPromise
             this.getJson(url).then((): void => {

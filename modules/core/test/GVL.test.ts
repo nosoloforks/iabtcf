@@ -1,6 +1,7 @@
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 import {GVL} from '../src/GVL';
+import {GVLError} from '../src/errors';
 import {Vendor} from '../src/model/gvl';
 import {IntMap} from '../src/model/IntMap';
 import {XMLHttpTestTools} from './support/XMLHttpTestTools';
@@ -32,6 +33,7 @@ describe('GVL', (): void => {
   beforeEach((): void => {
 
     GVL.baseUrl = '';
+    GVL.languageUrl = '';
     XMLHttpTestTools.beforeEach();
 
   });
@@ -147,13 +149,13 @@ describe('GVL', (): void => {
 
   it('should replace the language when changeLanguage() is called with valid language', (done: () => void): void => {
 
-    GVL.baseUrl = 'http://sweetcmp.com';
+    GVL.languageUrl = 'http://sweetcmp.com';
 
     const DEFAULT_LANGUAGE = 'en';
     const gvl: GVL = new GVL(vendorlistJson);
     const language = 'fr';
 
-    expect(gvl.language).to.equal(DEFAULT_LANGUAGE);
+    expect(gvl.language.toLowerCase()).to.equal(DEFAULT_LANGUAGE);
 
     gvl.changeLanguage(language).then((): void => {
 
@@ -168,7 +170,7 @@ describe('GVL', (): void => {
       expect(gvl.features, 'features should match').to.not.deep.equal(vendorlistJson.features);
       expect(gvl.specialFeatures, 'specialFeatures should match').to.not.deep.equal(vendorlistJson.specialFeatures);
 
-      expect(gvl.language).to.equal(language);
+      expect(gvl.language.toLowerCase()).to.equal(language);
 
       done();
 
@@ -179,7 +181,7 @@ describe('GVL', (): void => {
     const req: sinon.SinonFakeXMLHttpRequest = XMLHttpTestTools.requests[0];
 
     expect(req.method).to.equal('GET');
-    expect(req.url).to.equal(GVL.baseUrl + '/' + GVL.languageFilename.replace('[LANG]', language));
+    expect(req.url).to.equal(GVL.languageUrl + '/' + GVL.languageFilename.replace('[LANG]', language));
 
     req.respond(200, XMLHttpTestTools.JSON_HEADER, JSON.stringify(translationJson));
 
@@ -189,7 +191,7 @@ describe('GVL', (): void => {
 
     it(`should throw an error if ${language} is passed to changeLanguage()`, (done: () => void): void => {
 
-      GVL.baseUrl = 'http://sweetcmp.com';
+      GVL.languageUrl = 'http://sweetcmp.com';
 
       const gvl: GVL = new GVL(vendorlistJson);
 
@@ -213,15 +215,14 @@ describe('GVL', (): void => {
   langNotOk('usa');
   langNotOk('..');
 
-  it(`should throw an error if GVL.baseUrl isn't set before changeLaguage() is called`, (done: () => void): void => {
-
+  it(`should throw an error if GVL.languageUrl isn't set before changeLaguage() is called`, (done: () => void): void => {
     const gvl: GVL = new GVL(vendorlistJson);
 
     gvl.changeLanguage('fr')
       .catch((err): void => {
 
-        // expect(err).to.be.an.instanceof(GVLError);
-        expect(err.message).to.contain('GVL.baseUrl');
+        expect(err).to.be.an.instanceof(GVLError);
+        expect(err.message).to.contain('GVL.languageUrl');
         done();
 
       });
@@ -230,12 +231,12 @@ describe('GVL', (): void => {
 
   it('should not request a file if the language is the same', (): void => {
 
-    GVL.baseUrl = 'http://sweetcmp.com';
+    GVL.languageUrl = 'http://sweetcmp.com';
 
     const DEFAULT_LANGUAGE = 'en';
     const gvl: GVL = new GVL(vendorlistJson);
 
-    expect(gvl.language).to.equal(DEFAULT_LANGUAGE);
+    expect(gvl.language.toLowerCase()).to.equal(DEFAULT_LANGUAGE);
 
     gvl.changeLanguage(DEFAULT_LANGUAGE);
     expect(XMLHttpTestTools.requests.length).to.equal(0);
@@ -244,13 +245,13 @@ describe('GVL', (): void => {
 
   it('should error if a 404 for the language file occurs', (done: () => void): void => {
 
-    GVL.baseUrl = 'http://sweetcmp.com';
+    GVL.languageUrl = 'http://sweetcmp.com';
 
     const DEFAULT_LANGUAGE = 'en';
     const gvl: GVL = new GVL(vendorlistJson);
     const language = 'fr';
 
-    expect(gvl.language).to.equal(DEFAULT_LANGUAGE);
+    expect(gvl.language.toLowerCase()).to.equal(DEFAULT_LANGUAGE);
 
     gvl.changeLanguage(language)
       .then((): void => {
@@ -260,7 +261,7 @@ describe('GVL', (): void => {
       })
       .catch((err): void => {
 
-        // expect(err).to.be.an.instanceof(GVLError);
+        expect(err).to.be.an.instanceof(GVLError);
         expect(err.message).to.contain('language');
         done();
 
@@ -271,7 +272,7 @@ describe('GVL', (): void => {
     const req: sinon.SinonFakeXMLHttpRequest = XMLHttpTestTools.requests[0];
 
     expect(req.method).to.equal('GET');
-    expect(req.url).to.equal(GVL.baseUrl + '/' + GVL.languageFilename.replace('[LANG]', language));
+    expect(req.url).to.equal(GVL.languageUrl + '/' + GVL.languageFilename.replace('[LANG]', language));
 
     req.respond(404, XMLHttpTestTools.JSON_HEADER, JSON.stringify({}));
 
